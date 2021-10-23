@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option go_package = "./protobuf";
+
+service MyService{
+    rpc GetStationWorkload(GetStationWorkloadRequest) returns (GetStationWorkloadResponse);
+    rpc GetStationWorkloadFromDB(GetStationWorkloadFromDBRequest) returns (GetStationWorkloadFromDBResponse);
+
+}
+
+message GetStationWorkloadFromDBRequest{
+    string stationName = 1;
+}
+message GetStationWorkloadFromDBResponse{
+    string RespstationName = 1;
+    map<string,DayWork> RespWorkLoad=2;
+    string Error = 3;
+}
+
+message GetStationWorkloadRequest{
+    string stationName = 1;
+    bool isUpdateDB = 2;
+}
+message DayWork{
+    map<int32,string> DayWorkload = 1;
+}
+message GetStationWorkloadResponse{
+    map<string,DayWork> WorkLoad=1;
+    string Error = 2;
+}
