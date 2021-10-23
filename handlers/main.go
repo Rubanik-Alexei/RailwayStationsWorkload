@@ -78,14 +78,7 @@ func (s *Server) GetStationWorkloadFromDB(ctx context.Context, req *protobuf.Get
 		result := &protobuf.GetStationWorkloadFromDBResponse{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuf.DayWork{}, Error: err.Error()}
 		return result, nil
 	}
-	// Importantly, use defer to ensure the connection is always
-	// properly closed before exiting the main() function.
 	defer conn.Close()
-
-	// Send our command across the connection. The first parameter to
-	// Do() is always the name of the Redis command (in this example
-	// HMSET), optionally followed by any necessary arguments (in this
-	// example the key, followed by the various hash fields and values).
 	values, err := redis.String(conn.Do("HGET", req.GetStationName(), "WorkLoad"))
 
 	if err != nil {
