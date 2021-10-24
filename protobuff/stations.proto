@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option go_package = "./protobuff";
+
+
+import "google/api/annotations.proto";
+
+service MyService{
+    rpc GetStationWorkload(GetStationWorkloadRequest) returns (GetStationWorkloadResponse){
+        option (google.api.http) = {
+          get: "/{stationName}/{isUpdateDB}"
+        };
+      }
+    rpc GetStationWorkloadFromDB(GetStationWorkloadFromDBRequest) returns (GetStationWorkloadFromDBResponse){
+        option (google.api.http) = {
+            get: "/{stationName}"
+          };
+        }
+}
+
+
+//protoc --grpc-gateway_out=logtostderr=true,v=2:.  protobuff/*.proto
+
+message GetStationWorkloadFromDBRequest{
+    string stationName = 1;
+}
+message GetStationWorkloadFromDBResponse{
+    string RespstationName = 1;
+    map<string,DayWork> RespWorkLoad=2;
+    string Error = 3;
+}
+
+message GetStationWorkloadRequest{
+    string stationName = 1;
+    bool isUpdateDB = 2;
+}
+message DayWork{
+    map<int32,string> DayWorkload = 1;
+}
+message GetStationWorkloadResponse{
+    map<string,DayWork> WorkLoad=1;
+    string Error = 2;
+}

@@ -1,0 +1,158 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "protobuff/stations.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/{stationName}": {
+      "get": {
+        "operationId": "MyService_GetStationWorkloadFromDB",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/GetStationWorkloadFromDBResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stationName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MyService"
+        ]
+      }
+    },
+    "/{stationName}/{isUpdateDB}": {
+      "get": {
+        "operationId": "MyService_GetStationWorkload",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/GetStationWorkloadResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "stationName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "isUpdateDB",
+            "in": "path",
+            "required": true,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "MyService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "DayWork": {
+      "type": "object",
+      "properties": {
+        "DayWorkload": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "GetStationWorkloadFromDBResponse": {
+      "type": "object",
+      "properties": {
+        "RespstationName": {
+          "type": "string"
+        },
+        "RespWorkLoad": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/DayWork"
+          }
+        },
+        "Error": {
+          "type": "string"
+        }
+      }
+    },
+    "GetStationWorkloadResponse": {
+      "type": "object",
+      "properties": {
+        "WorkLoad": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/DayWork"
+          }
+        },
+        "Error": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
