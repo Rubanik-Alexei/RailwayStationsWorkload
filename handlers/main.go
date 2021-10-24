@@ -22,17 +22,15 @@ func NewMyServer(l hclog.Logger) *Server {
 }
 
 func (s *Server) GetStationWorkload(ctx context.Context, req *protobuff.GetStationWorkloadRequest) (*protobuff.GetStationWorkloadResponse, error) {
-	msg_err := "OK"
 	url_file := os.Getenv("STATIONSURLS")
 	station := req.GetStationName()
-	url, err := readCsvFile(url_file, station)
+	url, err := ReadCsvFile(url_file, station)
 	if err != nil {
 		s.log.Error(url, "error", err)
-		msg_err = err.Error()
 		return &protobuff.GetStationWorkloadResponse{WorkLoad: map[string]*protobuff.DayWork{}, Error: url}, nil
 	}
 	res, err := GetMap(url, 2)
-	if req.GetIsUpdateDB() == true {
+	if req.GetIsUpdateDB() {
 		conn, err := redis.Dial("tcp", "localhost:6379")
 		if err != nil {
 			result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: err.Error()}
@@ -55,11 +53,10 @@ func (s *Server) GetStationWorkload(ctx context.Context, req *protobuff.GetStati
 	}
 	if err != nil {
 		s.log.Error(url, "error", err)
-		msg_err = err.Error()
 		return &protobuff.GetStationWorkloadResponse{WorkLoad: map[string]*protobuff.DayWork{}, Error: url}, nil
 	}
 
-	result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: msg_err}
+	result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "OK"}
 	_, _ = protojson.Marshal(result)
 	// fmt.Println(string(jsontmp))
 	return result, nil

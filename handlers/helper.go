@@ -5,7 +5,6 @@ package handlers
 import (
 	"RailwayStationsWorkload/protobuff"
 	"encoding/csv"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,7 +14,7 @@ import (
 	"time"
 )
 
-func readCsvFile(filePath string, station string) (string, error) {
+func ReadCsvFile(filePath string, station string) (string, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return "Cannot Open Urls File", err
@@ -46,7 +45,9 @@ func GetMap(uurl string, wait time.Duration) (map[string]*protobuff.DayWork, err
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.54 Safari/537.36")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
 	resp, err := client.Do(req)
-
+	if err != nil {
+		return result, err
+	}
 	defer resp.Body.Close()
 	time.Sleep(wait)
 	body, err1 := ioutil.ReadAll(resp.Body)
@@ -76,19 +77,19 @@ func GetMap(uurl string, wait time.Duration) (map[string]*protobuff.DayWork, err
 	cnt := 0
 	days := []string{"Sunday", "Monday", "Thuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
 	for i := start_ind + 1; i <= end_ind; {
-		EndDay := true
+		endDay := true
 		tmp_map := make(map[int32]string)
-		for EndDay {
+		for endDay {
 			tmp := days[cnt]
 			str_hour := strings.TrimLeft(split_body[i], "[")
 			hour, err := strconv.Atoi(str_hour)
 			if err != nil {
-				fmt.Println("Ce pizda")
+				return result, err
 			}
 			percentage := split_body[i+1]
 			tmp_map[int32(hour)] = percentage
 			if hour == 3 {
-				EndDay = false
+				endDay = false
 				result[tmp] = &protobuff.DayWork{DayWorkload: tmp_map}
 				cnt++
 				i += 9
