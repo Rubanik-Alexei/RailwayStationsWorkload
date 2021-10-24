@@ -28,7 +28,7 @@ func readCsvFile(filePath string, station string) (string, error) {
 		return "Cannot parse Urls file as CSV", err
 	}
 	for _, v := range records {
-		fmt.Println(v)
+		//fmt.Println(v)
 		if v[5] == station {
 			return v[2], nil
 		}
