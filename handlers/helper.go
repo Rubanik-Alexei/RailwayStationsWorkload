@@ -1,5 +1,6 @@
 package handlers
 
+//request examples for testing by hand
 //grpcurl --plaintext -d '{"stationName":"Мшинская","isUpdateDB":true}' localhost:9092 MyService.GetStationWorkload
 //grpcurl --plaintext -d '{"stationName":"Мшинская"}' localhost:9092 MyService.GetStationWorkloadFromDB
 import (
@@ -14,6 +15,15 @@ import (
 	"time"
 )
 
+type MyError struct {
+	error_msg string
+}
+
+func (m MyError) Error() string {
+	return m.error_msg
+}
+
+//Checking if required station name is available for scrapping workload
 func ReadCsvFile(filePath string, station string) (string, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -28,13 +38,25 @@ func ReadCsvFile(filePath string, station string) (string, error) {
 	}
 	for _, v := range records {
 		//fmt.Println(v)
+		//if name is found then return it's google maps url
 		if v[5] == station {
 			return v[2], nil
 		}
 	}
-	return "Incorrect station name or this station is not supported for now :(", http.ErrAbortHandler
+	return "Incorrect station name or this station is not supported for now :(", MyError{error_msg: ""}
 }
 
+//helper function for finding beginning/ending of workload
+func FindIndex(re *regexp.Regexp, start_ind int, split_body []string) int {
+	for i := start_ind; i < len(split_body); i++ {
+		if re.MatchString(split_body[i]) {
+			return i
+		}
+	}
+	return 0
+}
+
+//Collecting workload
 func GetMap(uurl string, wait time.Duration) (map[string]*protobuff.DayWork, error) {
 	client := &http.Client{}
 	result := make(map[string]*protobuff.DayWork)
@@ -55,27 +77,27 @@ func GetMap(uurl string, wait time.Duration) (map[string]*protobuff.DayWork, err
 		return result, err1
 	}
 	str_body := string(body)
+	//Now we have the body of our station page and starting to retrieve data
+
 	//fmt.Println(str_body)
 	split_body := strings.Split(str_body, ",")
 	//fmt.Println(split_body)
+
+	//Finding the begging of workload info
 	re := regexp.MustCompile(`\[\[\[7`)
-	re1 := regexp.MustCompile(`0\]\]`)
-	start_ind := 0
-	end_ind := 0
-	for i, v := range split_body {
-		if re.MatchString(v) {
-			start_ind = i
-			break
-		}
+	start_ind := FindIndex(re, 0, split_body)
+	if start_ind == 0 {
+		return result, MyError{error_msg: "Cannot find workload on google map page"}
 	}
-	for i := start_ind; i < len(split_body); i++ {
-		if re1.MatchString(split_body[i]) {
-			end_ind = i
-			break
-		}
+	//Finding the ending of workload info
+	re1 := regexp.MustCompile(`0\]\]`)
+	end_ind := FindIndex(re1, start_ind, split_body)
+	if end_ind == 0 {
+		return result, MyError{error_msg: "Cannot find workload on google map page"}
 	}
 	cnt := 0
 	days := []string{"Sunday", "Monday", "Thuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+	//Loop for retrieving hour:percentage pairs for each day
 	for i := start_ind + 1; i <= end_ind; {
 		endDay := true
 		tmp_map := make(map[int32]string)
@@ -92,9 +114,11 @@ func GetMap(uurl string, wait time.Duration) (map[string]*protobuff.DayWork, err
 				endDay = false
 				result[tmp] = &protobuff.DayWork{DayWorkload: tmp_map}
 				cnt++
+				//skipping to next day
 				i += 9
 				break
 			}
+			//skipping to next pair
 			i += 7
 		}
 	}

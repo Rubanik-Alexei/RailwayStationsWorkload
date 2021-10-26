@@ -40,7 +40,6 @@ func main() {
 	}
 	gs := grpc.NewServer()
 	ms := handlers.NewMyServer(logg)
-	// Attach the Greeter service to the server
 	protobuff.RegisterMyServiceServer(gs, ms)
 	//reflection.Register(reflection.GRPCServer(gs))
 	// Serve gRPC server
@@ -49,8 +48,7 @@ func main() {
 		log.Fatalln(gs.Serve(lis))
 	}()
 
-	// Create a client connection to the gRPC server we just started
-	// This is where the gRPC-Gateway proxies the requests
+	// Create a client connection to the gRPC server
 	conn, err := grpc.DialContext(
 		context.Background(),
 		"0.0.0.0:9092",
@@ -62,7 +60,7 @@ func main() {
 	}
 
 	gwmux := runtime.NewServeMux()
-	// Register Greeter
+	// Register handler
 	err = protobuff.RegisterMyServiceHandler(context.Background(), gwmux, conn)
 	if err != nil {
 		log.Fatalln("Failed to register gateway:", err)
