@@ -93,10 +93,18 @@
     "GetStationWorkloadFromDBResponse": {
       "type": "object",
       "properties": {
-        "RespstationName": {
-          "type": "string"
-        },
-        "RespWorkLoad": {
+        "StationWorkloads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StationData"
+          }
+        }
+      }
+    },
+    "GetStationWorkloadResponse": {
+      "type": "object",
+      "properties": {
+        "WorkLoad": {
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/DayWork"
@@ -107,10 +115,13 @@
         }
       }
     },
-    "GetStationWorkloadResponse": {
+    "StationData": {
       "type": "object",
       "properties": {
-        "WorkLoad": {
+        "RespstationName": {
+          "type": "string"
+        },
+        "RespWorkLoad": {
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/DayWork"

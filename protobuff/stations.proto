@@ -24,11 +24,15 @@ service MyService{
 message GetStationWorkloadFromDBRequest{
     string stationName = 1;
 }
-message GetStationWorkloadFromDBResponse{
+message StationData{
     string RespstationName = 1;
     map<string,DayWork> RespWorkLoad=2;
     string Error = 3;
 }
+message GetStationWorkloadFromDBResponse{
+    repeated StationData StationWorkloads = 1;
+}
+
 
 message GetStationWorkloadRequest{
     string stationName = 1;

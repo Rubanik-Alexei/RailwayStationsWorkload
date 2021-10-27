@@ -19,10 +19,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MyServiceClient interface {
 	GetStationWorkload(ctx context.Context, in *GetStationWorkloadRequest, opts ...grpc.CallOption) (*GetStationWorkloadResponse, error)
-	//     option (google.api.http) = {
-	//       get: "/{stationName}"
-	//     };
-	//   }
 	GetStationWorkloadFromDB(ctx context.Context, in *GetStationWorkloadFromDBRequest, opts ...grpc.CallOption) (*GetStationWorkloadFromDBResponse, error)
 }
 
@@ -57,10 +53,6 @@ func (c *myServiceClient) GetStationWorkloadFromDB(ctx context.Context, in *GetS
 // for forward compatibility
 type MyServiceServer interface {
 	GetStationWorkload(context.Context, *GetStationWorkloadRequest) (*GetStationWorkloadResponse, error)
-	//     option (google.api.http) = {
-	//       get: "/{stationName}"
-	//     };
-	//   }
 	GetStationWorkloadFromDB(context.Context, *GetStationWorkloadFromDBRequest) (*GetStationWorkloadFromDBResponse, error)
 	mustEmbedUnimplementedMyServiceServer()
 }

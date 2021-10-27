@@ -13,14 +13,15 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
+	"github.com/golang/protobuf/descriptor"
+	"github.com/golang/protobuf/proto"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/utilities"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 // Suppress "imported and not used" errors
@@ -29,6 +30,7 @@ var _ io.Reader
 var _ status.Status
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
+var _ = descriptor.ForMessage
 var _ = metadata.Join
 
 func request_MyService_GetStationWorkload_0(ctx context.Context, marshaler runtime.Marshaler, client MyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -48,6 +50,7 @@ func request_MyService_GetStationWorkload_0(ctx context.Context, marshaler runti
 	}
 
 	protoReq.StationName, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stationName", err)
 	}
@@ -58,6 +61,7 @@ func request_MyService_GetStationWorkload_0(ctx context.Context, marshaler runti
 	}
 
 	protoReq.IsUpdateDB, err = runtime.Bool(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "isUpdateDB", err)
 	}
@@ -84,6 +88,7 @@ func local_request_MyService_GetStationWorkload_0(ctx context.Context, marshaler
 	}
 
 	protoReq.StationName, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stationName", err)
 	}
@@ -94,6 +99,7 @@ func local_request_MyService_GetStationWorkload_0(ctx context.Context, marshaler
 	}
 
 	protoReq.IsUpdateDB, err = runtime.Bool(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "isUpdateDB", err)
 	}
@@ -120,6 +126,7 @@ func request_MyService_GetStationWorkloadFromDB_0(ctx context.Context, marshaler
 	}
 
 	protoReq.StationName, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stationName", err)
 	}
@@ -146,6 +153,7 @@ func local_request_MyService_GetStationWorkloadFromDB_0(ctx context.Context, mar
 	}
 
 	protoReq.StationName, err = runtime.String(val)
+
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stationName", err)
 	}
@@ -167,7 +175,7 @@ func RegisterMyServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, 
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.MyService/GetStationWorkload", runtime.WithHTTPPathPattern("/{stationName}/{isUpdateDB}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -190,7 +198,7 @@ func RegisterMyServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, 
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.MyService/GetStationWorkloadFromDB", runtime.WithHTTPPathPattern("/{stationName}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -252,7 +260,7 @@ func RegisterMyServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.MyService/GetStationWorkload", runtime.WithHTTPPathPattern("/{stationName}/{isUpdateDB}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -272,7 +280,7 @@ func RegisterMyServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/.MyService/GetStationWorkloadFromDB", runtime.WithHTTPPathPattern("/{stationName}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -292,9 +300,9 @@ func RegisterMyServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 }
 
 var (
-	pattern_MyService_GetStationWorkload_0 = runtime.MustPattern(runtime.NewPattern(1, []int{1, 0, 4, 1, 5, 0, 1, 0, 4, 1, 5, 1}, []string{"stationName", "isUpdateDB"}, ""))
+	pattern_MyService_GetStationWorkload_0 = runtime.MustPattern(runtime.NewPattern(1, []int{1, 0, 4, 1, 5, 0, 1, 0, 4, 1, 5, 1}, []string{"stationName", "isUpdateDB"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_MyService_GetStationWorkloadFromDB_0 = runtime.MustPattern(runtime.NewPattern(1, []int{1, 0, 4, 1, 5, 0}, []string{"stationName"}, ""))
+	pattern_MyService_GetStationWorkloadFromDB_0 = runtime.MustPattern(runtime.NewPattern(1, []int{1, 0, 4, 1, 5, 0}, []string{"stationName"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

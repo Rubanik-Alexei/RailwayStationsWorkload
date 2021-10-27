@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"
 	//"google.golang.org/grpc/reflection"
