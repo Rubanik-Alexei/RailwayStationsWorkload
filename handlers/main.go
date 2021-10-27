@@ -5,7 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
+	"strings"
+	"sync"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/hashicorp/go-hclog"
@@ -69,14 +72,14 @@ func (s *Server) GetStationWorkloadFromDB(ctx context.Context, req *protobuff.Ge
 	msg_err := "OK"
 	conn, err := redis.Dial("tcp", "localhost:6379")
 	if err != nil {
-		result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{&protobuff.StationData{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuff.DayWork{}, Error: "Cannot connect to Redis"}}}
+		result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuff.DayWork{}, Error: "Cannot connect to Redis"}}}
 		return result, nil
 	}
 	defer conn.Close()
 	if req.GetStationName() == "All" {
 		keys, err := redis.Strings(conn.Do("KEYS", "*"))
 		if err != nil || len(keys) == 0 {
-			result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{&protobuff.StationData{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuff.DayWork{}, Error: "No data found in Redis"}}}
+			result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuff.DayWork{}, Error: "No data found in Redis"}}}
 			return result, nil
 		}
 		tmpresp := []*protobuff.StationData{}
@@ -84,14 +87,14 @@ func (s *Server) GetStationWorkloadFromDB(ctx context.Context, req *protobuff.Ge
 			var tmp map[string]*protobuff.DayWork
 			values, err := redis.String(conn.Do("HGET", v, "WorkLoad"))
 			if err != nil {
-				result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{&protobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()}}}
+				result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()}}}
 				return result, nil
 			}
 			//fmt.Println(values)
 			//Unmarshaling to response struct
 			err = json.Unmarshal([]byte(values), &tmp)
 			if err != nil {
-				result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{&protobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: fmt.Sprintf("Failed to retrieve workload for station %s", v)}}}
+				result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: fmt.Sprintf("Failed to retrieve workload for station %s", v)}}}
 				return result, nil
 			}
 			tmpresp = append(tmpresp, &protobuff.StationData{RespstationName: v, RespWorkLoad: tmp, Error: "OK\n"})
@@ -101,7 +104,7 @@ func (s *Server) GetStationWorkloadFromDB(ctx context.Context, req *protobuff.Ge
 	}
 	values, err := redis.String(conn.Do("HGET", req.GetStationName(), "WorkLoad"))
 	if err != nil {
-		result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{&protobuff.StationData{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuff.DayWork{}, Error: fmt.Sprintf("Failed to retrieve workload for station %s", req.GetStationName())}}}
+		result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuff.DayWork{}, Error: fmt.Sprintf("Failed to retrieve workload for station %s", req.GetStationName())}}}
 		return result, nil
 	}
 	var tmp map[string]*protobuff.DayWork
@@ -109,13 +112,45 @@ func (s *Server) GetStationWorkloadFromDB(ctx context.Context, req *protobuff.Ge
 	//Unmarshaling to response struct
 	err = json.Unmarshal([]byte(values), &tmp)
 	if err != nil {
-		result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{&protobuff.StationData{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()}}}
+		result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{{RespstationName: req.GetStationName(), RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()}}}
 		return result, nil
 	}
-	result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{&protobuff.StationData{RespstationName: req.GetStationName(), RespWorkLoad: tmp, Error: msg_err}}}
+	result := &protobuff.GetStationWorkloadFromDBResponse{StationWorkloads: []*protobuff.StationData{{RespstationName: req.GetStationName(), RespWorkLoad: tmp, Error: msg_err}}}
 
 	return result, nil
 }
+
+//using goroutines to retrieve and send data for each station
+func (s *Server) GetManyStationWorkload(req *protobuff.GetStationWorkloadFromDBRequest, srv protobuff.MyService_GetManyStationWorkloadServer) error {
+	stations_array := strings.Split(req.GetStationName(), ",")
+	var wg sync.WaitGroup
+	for _, v := range stations_array {
+		wg.Add(1)
+		go func(v string) {
+			defer wg.Done()
+			url_file := os.Getenv("STATIONSURLS")
+			url, err := ReadCsvFile(url_file, v)
+			if err != nil {
+				s.log.Error(url, "error", err)
+				srv.Send(&protobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()})
+			}
+			res, err := GetMap(url, 2)
+			if err != nil {
+				s.log.Error(url, "error", err)
+				srv.Send(&protobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()})
+			}
+			resp := &protobuff.StationData{RespstationName: v, RespWorkLoad: res, Error: "OK"}
+			if err := srv.Send(resp); err != nil {
+				log.Printf("send error %v", err)
+			}
+			s.log.Info("Send workload for station : %s", v)
+		}(v)
+		//time.Sleep(5 * time.Second)
+	}
+	wg.Wait()
+	return nil
+}
+
 func (s *Server) mustEmbedUnimplementedMyServiceServer() error {
 	return nil
 }

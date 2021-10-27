@@ -6,6 +6,12 @@ option go_package = "./protobuff";
 import "google/api/annotations.proto";
 
 service MyService{
+    rpc GetManyStationWorkload(GetStationWorkloadFromDBRequest) returns (stream StationData){
+        option (google.api.http) = {
+            get: "/many/{stationName}"
+          };
+        }
+    
     rpc GetStationWorkload(GetStationWorkloadRequest) returns (GetStationWorkloadResponse){
         option (google.api.http) = {
           get: "/{stationName}/{isUpdateDB}"
@@ -16,7 +22,8 @@ service MyService{
             get: "/{stationName}"
           };
         }
-}
+    
+    }
 
 
 //protoc --grpc-gateway_out=logtostderr=true,v=2:.  protobuff/*.proto

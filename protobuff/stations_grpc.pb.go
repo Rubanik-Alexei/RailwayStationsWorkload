@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MyServiceClient interface {
+	GetManyStationWorkload(ctx context.Context, in *GetStationWorkloadFromDBRequest, opts ...grpc.CallOption) (MyService_GetManyStationWorkloadClient, error)
 	GetStationWorkload(ctx context.Context, in *GetStationWorkloadRequest, opts ...grpc.CallOption) (*GetStationWorkloadResponse, error)
 	GetStationWorkloadFromDB(ctx context.Context, in *GetStationWorkloadFromDBRequest, opts ...grpc.CallOption) (*GetStationWorkloadFromDBResponse, error)
 }
@@ -28,6 +29,38 @@ type myServiceClient struct {
 
 func NewMyServiceClient(cc grpc.ClientConnInterface) MyServiceClient {
 	return &myServiceClient{cc}
+}
+
+func (c *myServiceClient) GetManyStationWorkload(ctx context.Context, in *GetStationWorkloadFromDBRequest, opts ...grpc.CallOption) (MyService_GetManyStationWorkloadClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MyService_ServiceDesc.Streams[0], "/MyService/GetManyStationWorkload", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &myServiceGetManyStationWorkloadClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type MyService_GetManyStationWorkloadClient interface {
+	Recv() (*StationData, error)
+	grpc.ClientStream
+}
+
+type myServiceGetManyStationWorkloadClient struct {
+	grpc.ClientStream
+}
+
+func (x *myServiceGetManyStationWorkloadClient) Recv() (*StationData, error) {
+	m := new(StationData)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *myServiceClient) GetStationWorkload(ctx context.Context, in *GetStationWorkloadRequest, opts ...grpc.CallOption) (*GetStationWorkloadResponse, error) {
@@ -52,6 +85,7 @@ func (c *myServiceClient) GetStationWorkloadFromDB(ctx context.Context, in *GetS
 // All implementations must embed UnimplementedMyServiceServer
 // for forward compatibility
 type MyServiceServer interface {
+	GetManyStationWorkload(*GetStationWorkloadFromDBRequest, MyService_GetManyStationWorkloadServer) error
 	GetStationWorkload(context.Context, *GetStationWorkloadRequest) (*GetStationWorkloadResponse, error)
 	GetStationWorkloadFromDB(context.Context, *GetStationWorkloadFromDBRequest) (*GetStationWorkloadFromDBResponse, error)
 	mustEmbedUnimplementedMyServiceServer()
@@ -61,6 +95,9 @@ type MyServiceServer interface {
 type UnimplementedMyServiceServer struct {
 }
 
+func (UnimplementedMyServiceServer) GetManyStationWorkload(*GetStationWorkloadFromDBRequest, MyService_GetManyStationWorkloadServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetManyStationWorkload not implemented")
+}
 func (UnimplementedMyServiceServer) GetStationWorkload(context.Context, *GetStationWorkloadRequest) (*GetStationWorkloadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStationWorkload not implemented")
 }
@@ -78,6 +115,27 @@ type UnsafeMyServiceServer interface {
 
 func RegisterMyServiceServer(s grpc.ServiceRegistrar, srv MyServiceServer) {
 	s.RegisterService(&MyService_ServiceDesc, srv)
+}
+
+func _MyService_GetManyStationWorkload_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetStationWorkloadFromDBRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(MyServiceServer).GetManyStationWorkload(m, &myServiceGetManyStationWorkloadServer{stream})
+}
+
+type MyService_GetManyStationWorkloadServer interface {
+	Send(*StationData) error
+	grpc.ServerStream
+}
+
+type myServiceGetManyStationWorkloadServer struct {
+	grpc.ServerStream
+}
+
+func (x *myServiceGetManyStationWorkloadServer) Send(m *StationData) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _MyService_GetStationWorkload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -132,6 +190,12 @@ var MyService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MyService_GetStationWorkloadFromDB_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetManyStationWorkload",
+			Handler:       _MyService_GetManyStationWorkload_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "protobuff/stations.proto",
 }
