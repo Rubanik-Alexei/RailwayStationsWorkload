@@ -33,8 +33,8 @@ var _ = utilities.NewDoubleArray
 var _ = descriptor.ForMessage
 var _ = metadata.Join
 
-func request_MyService_GetManyStationWorkload_0(ctx context.Context, marshaler runtime.Marshaler, client MyServiceClient, req *http.Request, pathParams map[string]string) (MyService_GetManyStationWorkloadClient, runtime.ServerMetadata, error) {
-	var protoReq GetStationWorkloadFromDBRequest
+func request_MyService_GetStationWorkload_0(ctx context.Context, marshaler runtime.Marshaler, client MyServiceClient, req *http.Request, pathParams map[string]string) (MyService_GetStationWorkloadClient, runtime.ServerMetadata, error) {
+	var protoReq GetStationWorkloadRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -55,7 +55,18 @@ func request_MyService_GetManyStationWorkload_0(ctx context.Context, marshaler r
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stationName", err)
 	}
 
-	stream, err := client.GetManyStationWorkload(ctx, &protoReq)
+	val, ok = pathParams["isUpdateDB"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "isUpdateDB")
+	}
+
+	protoReq.IsUpdateDB, err = runtime.Bool(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "isUpdateDB", err)
+	}
+
+	stream, err := client.GetStationWorkload(ctx, &protoReq)
 	if err != nil {
 		return nil, metadata, err
 	}
@@ -65,82 +76,6 @@ func request_MyService_GetManyStationWorkload_0(ctx context.Context, marshaler r
 	}
 	metadata.HeaderMD = header
 	return stream, metadata, nil
-
-}
-
-func request_MyService_GetStationWorkload_0(ctx context.Context, marshaler runtime.Marshaler, client MyServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetStationWorkloadRequest
-	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["stationName"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "stationName")
-	}
-
-	protoReq.StationName, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stationName", err)
-	}
-
-	val, ok = pathParams["isUpdateDB"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "isUpdateDB")
-	}
-
-	protoReq.IsUpdateDB, err = runtime.Bool(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "isUpdateDB", err)
-	}
-
-	msg, err := client.GetStationWorkload(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_MyService_GetStationWorkload_0(ctx context.Context, marshaler runtime.Marshaler, server MyServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetStationWorkloadRequest
-	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["stationName"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "stationName")
-	}
-
-	protoReq.StationName, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "stationName", err)
-	}
-
-	val, ok = pathParams["isUpdateDB"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "isUpdateDB")
-	}
-
-	protoReq.IsUpdateDB, err = runtime.Bool(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "isUpdateDB", err)
-	}
-
-	msg, err := server.GetStationWorkload(ctx, &protoReq)
-	return msg, metadata, err
 
 }
 
@@ -204,34 +139,11 @@ func local_request_MyService_GetStationWorkloadFromDB_0(ctx context.Context, mar
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterMyServiceHandlerFromEndpoint instead.
 func RegisterMyServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server MyServiceServer) error {
 
-	mux.Handle("GET", pattern_MyService_GetManyStationWorkload_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_MyService_GetStationWorkload_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 		return
-	})
-
-	mux.Handle("GET", pattern_MyService_GetStationWorkload_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_MyService_GetStationWorkload_0(rctx, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_MyService_GetStationWorkload_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	mux.Handle("GET", pattern_MyService_GetStationWorkloadFromDB_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -298,26 +210,6 @@ func RegisterMyServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *
 // "MyServiceClient" to call the correct interceptors.
 func RegisterMyServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client MyServiceClient) error {
 
-	mux.Handle("GET", pattern_MyService_GetManyStationWorkload_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_MyService_GetManyStationWorkload_0(rctx, inboundMarshaler, client, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_MyService_GetManyStationWorkload_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
-
-	})
-
 	mux.Handle("GET", pattern_MyService_GetStationWorkload_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -334,7 +226,7 @@ func RegisterMyServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 			return
 		}
 
-		forward_MyService_GetStationWorkload_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_MyService_GetStationWorkload_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -362,17 +254,13 @@ func RegisterMyServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 }
 
 var (
-	pattern_MyService_GetManyStationWorkload_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"many", "stationName"}, "", runtime.AssumeColonVerbOpt(true)))
-
 	pattern_MyService_GetStationWorkload_0 = runtime.MustPattern(runtime.NewPattern(1, []int{1, 0, 4, 1, 5, 0, 1, 0, 4, 1, 5, 1}, []string{"stationName", "isUpdateDB"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_MyService_GetStationWorkloadFromDB_0 = runtime.MustPattern(runtime.NewPattern(1, []int{1, 0, 4, 1, 5, 0}, []string{"stationName"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
-	forward_MyService_GetManyStationWorkload_0 = runtime.ForwardResponseStream
-
-	forward_MyService_GetStationWorkload_0 = runtime.ForwardResponseMessage
+	forward_MyService_GetStationWorkload_0 = runtime.ForwardResponseStream
 
 	forward_MyService_GetStationWorkloadFromDB_0 = runtime.ForwardResponseMessage
 )

@@ -6,17 +6,17 @@ option go_package = "./protobuff";
 import "google/api/annotations.proto";
 
 service MyService{
-    rpc GetManyStationWorkload(GetStationWorkloadFromDBRequest) returns (stream StationData){
+    rpc GetStationWorkload(GetStationWorkloadRequest) returns (stream StationData){
         option (google.api.http) = {
-            get: "/many/{stationName}"
+            get: "/{stationName}/{isUpdateDB}"
           };
         }
     
-    rpc GetStationWorkload(GetStationWorkloadRequest) returns (GetStationWorkloadResponse){
-        option (google.api.http) = {
-          get: "/{stationName}/{isUpdateDB}"
-        };
-      }
+    // rpc GetStationWorkload(GetStationWorkloadRequest) returns (GetStationWorkloadResponse){
+    //     option (google.api.http) = {
+    //       get: "/{stationName}/{isUpdateDB}"
+    //     };
+    //   }
     rpc GetStationWorkloadFromDB(GetStationWorkloadFromDBRequest) returns (GetStationWorkloadFromDBResponse){
         option (google.api.http) = {
             get: "/{stationName}"
@@ -48,7 +48,7 @@ message GetStationWorkloadRequest{
 message DayWork{
     map<int32,string> DayWorkload = 1;
 }
-message GetStationWorkloadResponse{
-    map<string,DayWork> WorkLoad=1;
-    string Error = 2;
-}
+// message GetStationWorkloadResponse{
+//     map<string,DayWork> WorkLoad=1;
+//     string Error = 2;
+// }

@@ -12,7 +12,7 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/hashicorp/go-hclog"
-	"google.golang.org/protobuf/encoding/protojson"
+	_ "google.golang.org/protobuf/encoding/protojson"
 )
 
 type Server struct {
@@ -24,50 +24,50 @@ func NewMyServer(l hclog.Logger) *Server {
 	return &Server{l, protobuff.UnimplementedMyServiceServer{}}
 }
 
-func (s *Server) GetStationWorkload(ctx context.Context, req *protobuff.GetStationWorkloadRequest) (*protobuff.GetStationWorkloadResponse, error) {
-	//retrieving path to file with needed stations and their urls
-	url_file := os.Getenv("STATIONSURLS")
-	station := req.GetStationName()
-	url, err := ReadCsvFile(url_file, station)
-	if err != nil {
-		s.log.Error(url, "error", err)
-		return &protobuff.GetStationWorkloadResponse{WorkLoad: map[string]*protobuff.DayWork{}, Error: url}, nil
-	}
-	res, err := GetMap(url, 2)
-	//Adding data to Redis if requested
-	if req.GetIsUpdateDB() {
-		conn, err := redis.Dial("tcp", "localhost:6379")
-		if err != nil {
-			result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "Cannot connect to Redis"}
-			return result, nil
-		}
-		defer conn.Close()
-		//Needed to marshal response struct to json to be able to store it
-		tmpres, err := json.Marshal(res)
-		if err != nil {
-			result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "Cannot parse response"}
-			return result, nil
-		}
-		v, err := conn.Do("HSET", station, "WorkLoad", string(tmpres))
-		fmt.Println(v)
-		if err != nil {
-			result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "Cannot add data to Redis"}
-			return result, nil
-		}
+// func (s *Server) GetStationWorkload(ctx context.Context, req *protobuff.GetStationWorkloadRequest) (*protobuff.GetStationWorkloadResponse, error) {
+// 	//retrieving path to file with needed stations and their urls
+// 	url_file := os.Getenv("STATIONSURLS")
+// 	station := req.GetStationName()
+// 	url, err := ReadCsvFile(url_file, station)
+// 	if err != nil {
+// 		s.log.Error(url, "error", err)
+// 		return &protobuff.GetStationWorkloadResponse{WorkLoad: map[string]*protobuff.DayWork{}, Error: url}, nil
+// 	}
+// 	res, err := GetMap(url, 2)
+// 	//Adding data to Redis if requested
+// 	if req.GetIsUpdateDB() {
+// 		conn, err := redis.Dial("tcp", "localhost:6379")
+// 		if err != nil {
+// 			result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "Cannot connect to Redis"}
+// 			return result, nil
+// 		}
+// 		defer conn.Close()
+// 		//Needed to marshal response struct to json to be able to store it
+// 		tmpres, err := json.Marshal(res)
+// 		if err != nil {
+// 			result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "Cannot parse response"}
+// 			return result, nil
+// 		}
+// 		v, err := conn.Do("HSET", station, "WorkLoad", string(tmpres))
+// 		fmt.Println(v)
+// 		if err != nil {
+// 			result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "Cannot add data to Redis"}
+// 			return result, nil
+// 		}
 
-		//fmt.Println("Added to DB")
-	}
-	if err != nil {
-		s.log.Error(url, "error", err)
-		return &protobuff.GetStationWorkloadResponse{WorkLoad: map[string]*protobuff.DayWork{}, Error: url}, nil
-	}
-	result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "OK"}
-	//Marshaling for browser availability
-	_, _ = protojson.Marshal(result)
-	// fmt.Println(string(jsontmp))
-	return result, nil
+// 		//fmt.Println("Added to DB")
+// 	}
+// 	if err != nil {
+// 		s.log.Error(url, "error", err)
+// 		return &protobuff.GetStationWorkloadResponse{WorkLoad: map[string]*protobuff.DayWork{}, Error: url}, nil
+// 	}
+// 	result := &protobuff.GetStationWorkloadResponse{WorkLoad: res, Error: "OK"}
+// 	//Marshaling for browser availability
+// 	_, _ = protojson.Marshal(result)
+// 	// fmt.Println(string(jsontmp))
+// 	return result, nil
 
-}
+// }
 func (s *Server) GetStationWorkloadFromDB(ctx context.Context, req *protobuff.GetStationWorkloadFromDBRequest) (*protobuff.GetStationWorkloadFromDBResponse, error) {
 	msg_err := "OK"
 	conn, err := redis.Dial("tcp", "localhost:6379")
@@ -121,12 +121,14 @@ func (s *Server) GetStationWorkloadFromDB(ctx context.Context, req *protobuff.Ge
 }
 
 //using goroutines to retrieve and send data for each station
-func (s *Server) GetManyStationWorkload(req *protobuff.GetStationWorkloadFromDBRequest, srv protobuff.MyService_GetManyStationWorkloadServer) error {
+func (s *Server) GetStationWorkload(req *protobuff.GetStationWorkloadRequest, srv protobuff.MyService_GetStationWorkloadServer) error {
 	stations_array := strings.Split(req.GetStationName(), ",")
 	var wg sync.WaitGroup
 	for _, v := range stations_array {
 		wg.Add(1)
 		go func(v string) {
+			resp_msg := "OK"
+			dbflag := req.GetIsUpdateDB()
 			defer wg.Done()
 			url_file := os.Getenv("STATIONSURLS")
 			url, err := ReadCsvFile(url_file, v)
@@ -139,11 +141,34 @@ func (s *Server) GetManyStationWorkload(req *protobuff.GetStationWorkloadFromDBR
 				s.log.Error(url, "error", err)
 				srv.Send(&protobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()})
 			}
-			resp := &protobuff.StationData{RespstationName: v, RespWorkLoad: res, Error: "OK"}
+			//Storing data in Redis
+			for dbflag == true {
+				conn, err := redis.Dial("tcp", "localhost:6379")
+				if err != nil {
+					resp_msg = "Cannot connect to Redis"
+					break
+				}
+				defer conn.Close()
+				//Needed to marshal response struct to json to be able to store it
+				tmpres, err := json.Marshal(res)
+				if err != nil {
+					resp_msg = "Cannot parse response"
+					break
+				}
+				v, err := conn.Do("HSET", v, "WorkLoad", string(tmpres))
+				fmt.Println(v)
+				if err != nil {
+					resp_msg = "Cannot add data to Redis"
+					break
+				}
+				dbflag = false
+			}
+			resp := &protobuff.StationData{RespstationName: v, RespWorkLoad: res, Error: resp_msg}
 			if err := srv.Send(resp); err != nil {
 				log.Printf("send error %v", err)
 			}
 			s.log.Info("Send workload for station : %s", v)
+			//fmt.Println("Added to DB")
 		}(v)
 		//time.Sleep(5 * time.Second)
 	}

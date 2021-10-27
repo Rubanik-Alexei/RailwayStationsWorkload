@@ -20,7 +20,7 @@ func main_() {
 
 	client := protobuff.NewMyServiceClient(conn)
 
-	response, err := client.GetStationWorkload(context.Background(), &protobuff.GetStationWorkloadRequest{StationName: "Славянка"})
+	response, err := client.GetStationWorkloadFromDB(context.Background(), &protobuff.GetStationWorkloadFromDBRequest{StationName: "Славянка"})
 	if err != nil {
 		log.Fatalf("Error when calling: %s", err)
 	}
