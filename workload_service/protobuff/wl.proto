@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "/workload_service/protobuff";
+
+service WorkloadService{
+    rpc GetStationWorkload(GetStationWorkloadRequest) returns (stream StationData);
+}
+
+message GetStationWorkloadRequest{
+    string stationName = 1;
+    bool isUpdateDB = 2;
+}
+message StationData{
+    string RespstationName = 1;
+    map<string,DayWork> RespWorkLoad=2;
+    string Error = 3;
+}
+
+message DayWork{
+    map<int32,string> DayWorkload = 1;
+}
