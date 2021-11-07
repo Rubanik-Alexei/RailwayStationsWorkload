@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "/redis_service/protobuff";
+
+service RedisService{
+    rpc StoreWorkload ( StoreWorkloadRequest) returns (Error_msg);
+
+}
+message StoreWorkloadRequest{
+    string Station = 1;
+    string Workload = 2;
+}
+message Error_msg{
+    string Error=1;
+}

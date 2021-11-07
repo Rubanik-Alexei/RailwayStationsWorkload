@@ -111,6 +111,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Expires", "0")
 	xlsx.Write(rw)
 }
+
 //unimplemented for now
 func (p *MyLog) GetFromDB(rw http.ResponseWriter, req *http.Request) {
 

@@ -1,7 +1,10 @@
 package workloadservice
 
 import (
-	"RailwayStationsWorkload_micro/workload_service/protobuff"
+	redisworkload "RailwayStationsWorkload_micro/redis_service"
+	redisProtobuff "RailwayStationsWorkload_micro/redis_service/protobuff"
+	wlProtobuff "RailwayStationsWorkload_micro/workload_service/protobuff"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -15,17 +18,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gomodule/redigo/redis"
 	"github.com/hashicorp/go-hclog"
+	"google.golang.org/grpc"
 )
 
 type Server struct {
 	log hclog.Logger
-	protobuff.UnimplementedWorkloadServiceServer
+	wlProtobuff.UnimplementedWorkloadServiceServer
 }
 
 func NewMyServer(l hclog.Logger) *Server {
-	return &Server{l, protobuff.UnimplementedWorkloadServiceServer{}}
+	return &Server{l, wlProtobuff.UnimplementedWorkloadServiceServer{}}
 }
 
 type MyError struct {
@@ -70,9 +73,9 @@ func FindIndex(re *regexp.Regexp, start_ind int, split_body []string) int {
 }
 
 //Collecting workload
-func GetMap(uurl string, wait time.Duration) (map[string]*protobuff.DayWork, error) {
+func GetMap(uurl string, wait time.Duration) (map[string]*wlProtobuff.DayWork, error) {
 	client := &http.Client{}
-	result := make(map[string]*protobuff.DayWork)
+	result := make(map[string]*wlProtobuff.DayWork)
 	req, err := http.NewRequest("GET", uurl, nil)
 	if err != nil {
 		return result, err
@@ -125,7 +128,7 @@ func GetMap(uurl string, wait time.Duration) (map[string]*protobuff.DayWork, err
 			tmp_map[int32(hour)] = percentage
 			if hour == 3 {
 				endDay = false
-				result[tmp] = &protobuff.DayWork{DayWorkload: tmp_map}
+				result[tmp] = &wlProtobuff.DayWork{DayWorkload: tmp_map}
 				cnt++
 				//skipping to next day
 				i += 9
@@ -138,7 +141,7 @@ func GetMap(uurl string, wait time.Duration) (map[string]*protobuff.DayWork, err
 	return result, nil
 }
 
-func (s *Server) GetStationWorkload(req *protobuff.GetStationWorkloadRequest, srv protobuff.WorkloadService_GetStationWorkloadServer) error {
+func (s *Server) GetStationWorkload(req *wlProtobuff.GetStationWorkloadRequest, srv wlProtobuff.WorkloadService_GetStationWorkloadServer) error {
 	stations_array := strings.Split(req.GetStationName(), ",")
 	var wg sync.WaitGroup
 	for _, v := range stations_array {
@@ -151,36 +154,38 @@ func (s *Server) GetStationWorkload(req *protobuff.GetStationWorkloadRequest, sr
 			url, err := ReadCsvFile(url_file, v)
 			if err != nil {
 				s.log.Error(url, "error", err)
-				srv.Send(&protobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()})
+				srv.Send(&wlProtobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*wlProtobuff.DayWork{}, Error: err.Error()})
 			}
 			res, err := GetMap(url, 2)
 			if err != nil {
 				s.log.Error(url, "error", err)
-				srv.Send(&protobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*protobuff.DayWork{}, Error: err.Error()})
+				srv.Send(&wlProtobuff.StationData{RespstationName: v, RespWorkLoad: map[string]*wlProtobuff.DayWork{}, Error: err.Error()})
 			}
-			//Storing data in Redis
+			//Making call to Redis service if needed
 			for dbflag == true {
-				conn, err := redis.Dial("tcp", "localhost:6379")
-				if err != nil {
-					resp_msg = "Cannot connect to Redis"
-					break
-				}
-				defer conn.Close()
 				//Needed to marshal response struct to json to be able to store it
 				tmpres, err := json.Marshal(res)
 				if err != nil {
 					resp_msg = "Cannot parse response"
 					break
 				}
-				v, err := conn.Do("HSET", v, "WorkLoad", string(tmpres))
-				fmt.Println(v)
+				//initializing redisService Client and making request to it
+				redisConn, err := grpc.Dial(redisworkload.Redisport, grpc.WithBlock(), grpc.WithInsecure())
 				if err != nil {
-					resp_msg = "Cannot add data to Redis"
+					resp_msg = "Couldn't connect to service"
 					break
 				}
+				defer redisConn.Close()
+				wl_client := redisProtobuff.NewRedisServiceClient(redisConn)
+				redisresp, err := wl_client.StoreWorkload(context.Background(), &redisProtobuff.StoreWorkloadRequest{Station: v, Workload: string(tmpres)})
+				if err != nil {
+					resp_msg = redisresp.Error
+					break
+				}
+				fmt.Println(v)
 				dbflag = false
 			}
-			resp := &protobuff.StationData{RespstationName: v, RespWorkLoad: res, Error: resp_msg}
+			resp := &wlProtobuff.StationData{RespstationName: v, RespWorkLoad: res, Error: resp_msg}
 			if err := srv.Send(resp); err != nil {
 				log.Printf("send error %v", err)
 			}
