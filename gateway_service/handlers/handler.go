@@ -1,18 +1,18 @@
 package handlers
 
 import (
+	workloadservice "RailwayStationsWorkload_micro/workload_service"
+	"RailwayStationsWorkload_micro/workload_service/protobuff"
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 
-	workloadservice "RailwayStationsWorkload_micro/workload_service"
-	"RailwayStationsWorkload_micro/workload_service/protobuff"
-
-	"github.com/gorilla/mux"
+	//"github.com/gorilla/mux"
 	"github.com/xuri/excelize/v2"
 	"google.golang.org/grpc"
 )
@@ -34,14 +34,39 @@ type StatResp struct {
 	Err string `json:"Error"`
 }
 
-func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	flag, err := strconv.ParseBool(vars["dbflag"])
+func (p *MyLog) LoadingForm(rw http.ResponseWriter, req *http.Request) {
+	t, err := template.ParseFiles("gateway_service/htmls/wl.gtpl")
 	if err != nil {
 		http.Error(rw, "Incorrect last argument", http.StatusBadRequest)
 		return
 	}
-	station := vars["station"]
+	t.Execute(rw, nil)
+}
+
+func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
+	var station string
+	var dbflag bool
+	req.ParseForm()
+	if len(req.Form["Stations"][0]) == 0 {
+		http.Error(rw, "No stations typed", http.StatusBadRequest)
+		return
+	}
+	// logic part of log in
+	fmt.Println("Station:", req.Form["Stations"])
+	station = req.Form["Stations"][0]
+	if len(req.Form) > 1 {
+		if req.Form["DBFlag"][0] == "AddToDB" {
+			dbflag = true
+			_ = dbflag
+		} else {
+			http.Error(rw, "Wrong request", http.StatusBadRequest)
+			return
+		}
+	}
+	// if err != nil {
+	// 	http.Error(rw, "Incorrect last argument", http.StatusBadRequest)
+	// 	return
+	// }
 	conn, err := grpc.Dial(workloadservice.WLport, grpc.WithBlock(), grpc.WithInsecure())
 	if err != nil {
 		http.Error(rw, "Couldn't connect to service", http.StatusInternalServerError)
@@ -49,7 +74,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer conn.Close()
 	wl_client := protobuff.NewWorkloadServiceClient(conn)
-	stream, err := wl_client.GetStationWorkload(context.Background(), &protobuff.GetStationWorkloadRequest{StationName: station, IsUpdateDB: flag})
+	stream, err := wl_client.GetStationWorkload(context.Background(), &protobuff.GetStationWorkloadRequest{StationName: station, IsUpdateDB: dbflag})
 	if err != nil {
 		http.Error(rw, "Bad response from some service", http.StatusInternalServerError)
 		return

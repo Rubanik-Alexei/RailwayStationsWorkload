@@ -23,7 +23,9 @@ func NewGateway() {
 
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/db/{station}", ph.GetFromDB)
-	getRouter.HandleFunc("/wl/{station}/{dbflag}", ph.GetWorkload)
+	getRouter.HandleFunc("/wl", ph.LoadingForm)
+	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/wl", ph.GetWorkload)
 
 	// create a new server
 	s := http.Server{
