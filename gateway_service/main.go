@@ -22,9 +22,10 @@ func NewGateway() {
 	sm := mux.NewRouter()
 
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/db/{station}", ph.GetFromDB)
+	getRouter.HandleFunc("/db", ph.LoadingDBForm)
 	getRouter.HandleFunc("/wl", ph.LoadingForm)
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/db", ph.GetFromDB)
 	postRouter.HandleFunc("/wl", ph.GetWorkload)
 
 	// create a new server

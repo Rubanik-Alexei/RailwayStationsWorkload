@@ -9,6 +9,7 @@ import (
 func main() {
 	//starting all services
 	workloadservice.NewWorkload()
-	gatewayservice.NewGateway()
 	redisservice.NewRedis()
+	gatewayservice.NewGateway()
+
 }

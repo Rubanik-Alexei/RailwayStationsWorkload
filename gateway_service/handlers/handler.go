@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	redisservice "RailwayStationsWorkload_micro/redis_service"
+	redisProtobuff "RailwayStationsWorkload_micro/redis_service/protobuff"
 	workloadservice "RailwayStationsWorkload_micro/workload_service"
 	"RailwayStationsWorkload_micro/workload_service/protobuff"
 	"context"
@@ -33,25 +35,54 @@ type StatResp struct {
 	} `json:"respWorkload"`
 	Err string `json:"Error"`
 }
+type DBResp struct {
+	StatName string `json:"StationName"`
+	Workload string `json:"Workload"`
+}
 
 func (p *MyLog) LoadingForm(rw http.ResponseWriter, req *http.Request) {
 	t, err := template.ParseFiles("gateway_service/htmls/wl.gtpl")
 	if err != nil {
-		http.Error(rw, "Incorrect last argument", http.StatusBadRequest)
+		http.Error(rw, "Cannot parse form", http.StatusBadRequest)
 		return
 	}
-	t.Execute(rw, nil)
+	t.Execute(rw, "Enter station's names separated by colon")
+}
+
+func createExcelWorkloadFile() *excelize.File {
+	xlsx := excelize.NewFile()
+	xlsx.NewSheet("Sunday")
+	xlsx.NewSheet("Monday")
+	xlsx.NewSheet("Tuesday")
+	xlsx.NewSheet("Wednesday")
+	xlsx.NewSheet("Thursday")
+	xlsx.NewSheet("Friday")
+	xlsx.NewSheet("Saturday")
+	xlsx.DeleteSheet("Sheet1")
+	xlsx.SetSheetRow("Sunday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
+	xlsx.SetSheetRow("Monday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
+	xlsx.SetSheetRow("Tuesday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
+	xlsx.SetSheetRow("Wednesday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
+	xlsx.SetSheetRow("Thursday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
+	xlsx.SetSheetRow("Friday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
+	xlsx.SetSheetRow("Saturday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
+	return xlsx
 }
 
 func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
+	Err_stations := ""
+	t, err := template.ParseFiles("gateway_service/htmls/wl.gtpl")
+	if err != nil {
+		http.Error(rw, "Cannot parse html", http.StatusBadRequest)
+		return
+	}
 	var station string
 	var dbflag bool
 	req.ParseForm()
 	if len(req.Form["Stations"][0]) == 0 {
-		http.Error(rw, "No stations typed", http.StatusBadRequest)
+		t.Execute(rw, "No stations was entered! ")
 		return
 	}
-	// logic part of log in
 	fmt.Println("Station:", req.Form["Stations"])
 	station = req.Form["Stations"][0]
 	if len(req.Form) > 1 {
@@ -80,23 +111,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	cnt := 2
-	//presetting excel file
-	xlsx := excelize.NewFile()
-	xlsx.NewSheet("Sunday")
-	xlsx.NewSheet("Monday")
-	xlsx.NewSheet("Tuesday")
-	xlsx.NewSheet("Wednesday")
-	xlsx.NewSheet("Thursday")
-	xlsx.NewSheet("Friday")
-	xlsx.NewSheet("Saturday")
-	xlsx.DeleteSheet("Sheet1")
-	xlsx.SetSheetRow("Sunday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
-	xlsx.SetSheetRow("Monday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
-	xlsx.SetSheetRow("Tuesday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
-	xlsx.SetSheetRow("Wednesday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
-	xlsx.SetSheetRow("Thursday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
-	xlsx.SetSheetRow("Friday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
-	xlsx.SetSheetRow("Saturday", "A1", &[]string{"Станция", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"})
+	xlsx := createExcelWorkloadFile()
 	//waiting for messages and storing them into excel file
 	for {
 		feature, err := stream.Recv()
@@ -116,7 +131,109 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 			fmt.Print(err)
 		}
 		// rw.Write([]byte(tmpResp.StatName + "\n"))
-		for k, v := range tmpResp.StatWl {
+		if len(tmpResp.StatWl) == 0 {
+			Err_stations += tmpResp.StatName + ", "
+		} else {
+			for k, v := range tmpResp.StatWl {
+				excl_str := []string{tmpResp.StatName}
+				// rw.Write([]byte(k + "\n"))
+				for i := int32(0); i <= 23; i++ {
+					// rw.Write([]byte(strconv.Itoa(int(i)) + ":"))
+					// rw.Write([]byte(v.DayWl[i] + "\n"))
+					excl_str = append(excl_str, v.DayWl[i])
+				}
+				xlsx.SetSheetRow(k, "A"+strconv.Itoa(cnt), &excl_str)
+			}
+
+			// rw.Write([]byte(tmpResp.Err))
+			// e := json.NewEncoder(rw)
+			// e.Encode(feature)
+			cnt++
+		}
+	}
+	if cnt == 2 {
+		t.Execute(rw, "All requested stations either have wrong names or unimplemented")
+		return
+	}
+	rw.Header().Set("Content-Disposition", "attachment; filename="+"WL"+".xlsx")
+	rw.Header().Set("Content-Type", req.Header.Get("Content-Type"))
+	rw.Header().Set("Content-Transfer-Encoding", "binary")
+	rw.Header().Set("Expires", "0")
+	xlsx.Write(rw)
+	// if Err_stations != "" {
+	// 	t.Execute(rw, "Wrong names or unimplemented for these stations: "+Err_stations)
+	// 	return
+	// } else {
+	// 	t.Execute(rw, "All workloads have been successfully collected for required stations ")
+	// 	return
+	// }
+
+}
+
+func (p *MyLog) LoadingDBForm(rw http.ResponseWriter, req *http.Request) {
+	t, err := template.ParseFiles("gateway_service/htmls/db.gtpl")
+	if err != nil {
+		http.Error(rw, "Cannot parse form", http.StatusBadRequest)
+		return
+	}
+	t.Execute(rw, "Enter station's names separated by colon")
+}
+
+//unimplemented for now
+func (p *MyLog) GetFromDB(rw http.ResponseWriter, req *http.Request) {
+	t, err := template.ParseFiles("gateway_service/htmls/db.gtpl")
+	if err != nil {
+		http.Error(rw, "Cannot parse html", http.StatusBadRequest)
+		return
+	}
+	var station string
+	req.ParseForm()
+	if len(req.Form["Stations"][0]) == 0 {
+		t.Execute(rw, "No stations was entered! ")
+		return
+	}
+	// logic part of log in
+	fmt.Println("Station:", req.Form["Stations"])
+	station = req.Form["Stations"][0]
+	conn, err := grpc.Dial(redisservice.Redisport, grpc.WithBlock(), grpc.WithInsecure())
+	if err != nil {
+		http.Error(rw, "Couldn't connect to service", http.StatusInternalServerError)
+		return
+	}
+	defer conn.Close()
+	redis_client := redisProtobuff.NewRedisServiceClient(conn)
+	stream, err := redis_client.SearchWorkload(context.Background(), &redisProtobuff.Stations{StationsNames: station})
+	if err != nil {
+		http.Error(rw, "Bad response from some service", http.StatusInternalServerError)
+		return
+	}
+	cnt := 2
+	xlsx := createExcelWorkloadFile()
+	//waiting for messages and storing them into excel file
+	for {
+		feature, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("%v.ListFeatures(_) = _, %v", redis_client, err)
+		}
+		tmpResp := &DBResp{}
+		tmp, err := json.Marshal(feature)
+		if err != nil {
+			fmt.Print(err)
+		}
+		err = json.Unmarshal(tmp, &tmpResp)
+		if err != nil {
+			fmt.Print(err)
+		}
+		// rw.Write([]byte(tmpResp.StatName + "\n"))
+		tmpWl := &StatResp{}
+		err = json.Unmarshal([]byte(tmpResp.Workload), &tmpWl.StatWl)
+		if err != nil {
+			fmt.Print(err)
+		}
+		for k, v := range tmpWl.StatWl {
 			excl_str := []string{tmpResp.StatName}
 			// rw.Write([]byte(k + "\n"))
 			for i := int32(0); i <= 23; i++ {
@@ -126,18 +243,20 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 			}
 			xlsx.SetSheetRow(k, "A"+strconv.Itoa(cnt), &excl_str)
 		}
+
 		// rw.Write([]byte(tmpResp.Err))
 		// e := json.NewEncoder(rw)
 		// e.Encode(feature)
 		cnt++
 	}
+
+	if cnt == 2 {
+		t.Execute(rw, "All requested stations either have wrong names or unimplemented")
+		return
+	}
 	rw.Header().Set("Content-Disposition", "attachment; filename="+"WL"+".xlsx")
+	rw.Header().Set("Content-Type", req.Header.Get("Content-Type"))
 	rw.Header().Set("Content-Transfer-Encoding", "binary")
 	rw.Header().Set("Expires", "0")
 	xlsx.Write(rw)
-}
-
-//unimplemented for now
-func (p *MyLog) GetFromDB(rw http.ResponseWriter, req *http.Request) {
-
 }

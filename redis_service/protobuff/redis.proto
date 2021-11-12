@@ -4,7 +4,15 @@ option go_package = "/redis_service/protobuff";
 
 service RedisService{
     rpc StoreWorkload ( StoreWorkloadRequest) returns (Error_msg);
+    rpc SearchWorkload(Stations) returns (stream SearchWorkloadResponse);
 
+}
+message Stations{
+    string StationsNames = 1;
+}
+message SearchWorkloadResponse{
+    string StationName = 1;
+    string Workload = 2;
 }
 message StoreWorkloadRequest{
     string Station = 1;

@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RedisServiceClient interface {
 	StoreWorkload(ctx context.Context, in *StoreWorkloadRequest, opts ...grpc.CallOption) (*ErrorMsg, error)
+	SearchWorkload(ctx context.Context, in *Stations, opts ...grpc.CallOption) (RedisService_SearchWorkloadClient, error)
 }
 
 type redisServiceClient struct {
@@ -38,11 +39,44 @@ func (c *redisServiceClient) StoreWorkload(ctx context.Context, in *StoreWorkloa
 	return out, nil
 }
 
+func (c *redisServiceClient) SearchWorkload(ctx context.Context, in *Stations, opts ...grpc.CallOption) (RedisService_SearchWorkloadClient, error) {
+	stream, err := c.cc.NewStream(ctx, &RedisService_ServiceDesc.Streams[0], "/RedisService/SearchWorkload", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &redisServiceSearchWorkloadClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type RedisService_SearchWorkloadClient interface {
+	Recv() (*SearchWorkloadResponse, error)
+	grpc.ClientStream
+}
+
+type redisServiceSearchWorkloadClient struct {
+	grpc.ClientStream
+}
+
+func (x *redisServiceSearchWorkloadClient) Recv() (*SearchWorkloadResponse, error) {
+	m := new(SearchWorkloadResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // RedisServiceServer is the server API for RedisService service.
 // All implementations must embed UnimplementedRedisServiceServer
 // for forward compatibility
 type RedisServiceServer interface {
 	StoreWorkload(context.Context, *StoreWorkloadRequest) (*ErrorMsg, error)
+	SearchWorkload(*Stations, RedisService_SearchWorkloadServer) error
 	mustEmbedUnimplementedRedisServiceServer()
 }
 
@@ -52,6 +86,9 @@ type UnimplementedRedisServiceServer struct {
 
 func (UnimplementedRedisServiceServer) StoreWorkload(context.Context, *StoreWorkloadRequest) (*ErrorMsg, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreWorkload not implemented")
+}
+func (UnimplementedRedisServiceServer) SearchWorkload(*Stations, RedisService_SearchWorkloadServer) error {
+	return status.Errorf(codes.Unimplemented, "method SearchWorkload not implemented")
 }
 func (UnimplementedRedisServiceServer) mustEmbedUnimplementedRedisServiceServer() {}
 
@@ -84,6 +121,27 @@ func _RedisService_StoreWorkload_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RedisService_SearchWorkload_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Stations)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(RedisServiceServer).SearchWorkload(m, &redisServiceSearchWorkloadServer{stream})
+}
+
+type RedisService_SearchWorkloadServer interface {
+	Send(*SearchWorkloadResponse) error
+	grpc.ServerStream
+}
+
+type redisServiceSearchWorkloadServer struct {
+	grpc.ServerStream
+}
+
+func (x *redisServiceSearchWorkloadServer) Send(m *SearchWorkloadResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // RedisService_ServiceDesc is the grpc.ServiceDesc for RedisService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -96,6 +154,12 @@ var RedisService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RedisService_StoreWorkload_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "SearchWorkload",
+			Handler:       _RedisService_SearchWorkload_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "redis_service/protobuff/redis.proto",
 }
