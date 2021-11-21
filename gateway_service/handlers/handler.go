@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	//"github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 	"github.com/xuri/excelize/v2"
 	"google.golang.org/grpc"
 )
@@ -47,6 +48,15 @@ func (p *MyLog) LoadingForm(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	t.Execute(rw, "Enter station's names separated by colon")
+}
+func (p *MyLog) LoadingFormIfErr(rw http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	t, err := template.ParseFiles("gateway_service/htmls/wl.gtpl")
+	if err != nil {
+		http.Error(rw, "Cannot parse form", http.StatusBadRequest)
+		return
+	}
+	t.Execute(rw, "The following stations either been typed wrong or just unimplemented:"+vars["ErrStations"])
 }
 
 func createExcelWorkloadFile() *excelize.File {
@@ -160,7 +170,10 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Transfer-Encoding", "binary")
 	rw.Header().Set("Expires", "0")
 	xlsx.Write(rw)
-	// if Err_stations != "" {
+	if Err_stations != "" {
+		http.Redirect(rw, req, "/wl/"+Err_stations, http.StatusSeeOther)
+	}
+
 	// 	t.Execute(rw, "Wrong names or unimplemented for these stations: "+Err_stations)
 	// 	return
 	// } else {

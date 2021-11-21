@@ -112,7 +112,7 @@ func GetMap(uurl string, wait time.Duration) (map[string]*wlProtobuff.DayWork, e
 		return result, MyError{error_msg: "Cannot find workload on google map page"}
 	}
 	cnt := 0
-	days := []string{"Sunday", "Monday", "Thuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+	days := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
 	//Loop for retrieving hour:percentage pairs for each day
 	for i := start_ind + 1; i <= end_ind; {
 		endDay := true

@@ -24,6 +24,7 @@ func NewGateway() {
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/db", ph.LoadingDBForm)
 	getRouter.HandleFunc("/wl", ph.LoadingForm)
+	getRouter.HandleFunc("/wl/{ErrStations}", ph.LoadingFormIfErr)
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/db", ph.GetFromDB)
 	postRouter.HandleFunc("/wl", ph.GetWorkload)
