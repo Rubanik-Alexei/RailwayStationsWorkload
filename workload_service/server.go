@@ -8,7 +8,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -88,7 +88,7 @@ func GetMap(uurl string, wait time.Duration) (map[string]*wlProtobuff.DayWork, e
 	}
 	defer resp.Body.Close()
 	time.Sleep(wait)
-	body, err1 := ioutil.ReadAll(resp.Body)
+	body, err1 := io.ReadAll(resp.Body)
 	if err1 != nil {
 		return result, err1
 	}
