@@ -13,12 +13,17 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	//"github.com/gorilla/mux"
 	"github.com/gorilla/mux"
 	"github.com/xuri/excelize/v2"
 	"google.golang.org/grpc"
 )
+
+//Paths to hmtls
+const wlTemplateName = "gateway_service/htmls/wl.html"
+const dbTemplateName = "gateway_service/htmls/db.html"
 
 type MyLog struct {
 	l *log.Logger
@@ -42,7 +47,9 @@ type DBResp struct {
 }
 
 func (p *MyLog) LoadingForm(rw http.ResponseWriter, req *http.Request) {
-	t, err := template.ParseFiles("gateway_service/htmls/wl.gtpl")
+	_, cancel := context.WithTimeout(req.Context(), 5*time.Second)
+	defer cancel()
+	t, err := template.ParseFiles(wlTemplateName)
 	if err != nil {
 		http.Error(rw, "Cannot parse form", http.StatusBadRequest)
 		return
@@ -50,8 +57,10 @@ func (p *MyLog) LoadingForm(rw http.ResponseWriter, req *http.Request) {
 	t.Execute(rw, "Enter station's names separated by colon")
 }
 func (p *MyLog) LoadingFormIfErr(rw http.ResponseWriter, req *http.Request) {
+	_, cancel := context.WithTimeout(req.Context(), 5*time.Second)
+	defer cancel()
 	vars := mux.Vars(req)
-	t, err := template.ParseFiles("gateway_service/htmls/wl.gtpl")
+	t, err := template.ParseFiles(wlTemplateName)
 	if err != nil {
 		http.Error(rw, "Cannot parse form", http.StatusBadRequest)
 		return
@@ -79,9 +88,13 @@ func createExcelWorkloadFile() *excelize.File {
 	return xlsx
 }
 
+//For now every request get a one minute timeout
+
 func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 60*time.Second)
+	defer cancel()
 	Err_stations := ""
-	t, err := template.ParseFiles("gateway_service/htmls/wl.gtpl")
+	t, err := template.ParseFiles(wlTemplateName)
 	if err != nil {
 		http.Error(rw, "Cannot parse html", http.StatusBadRequest)
 		return
@@ -115,7 +128,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer conn.Close()
 	wl_client := protobuff.NewWorkloadServiceClient(conn)
-	stream, err := wl_client.GetStationWorkload(context.Background(), &protobuff.GetStationWorkloadRequest{StationName: station, IsUpdateDB: dbflag})
+	stream, err := wl_client.GetStationWorkload(ctx, &protobuff.GetStationWorkloadRequest{StationName: station, IsUpdateDB: dbflag})
 	if err != nil {
 		http.Error(rw, "Bad response from some service", http.StatusInternalServerError)
 		return
@@ -170,9 +183,9 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Transfer-Encoding", "binary")
 	rw.Header().Set("Expires", "0")
 	xlsx.Write(rw)
-	if Err_stations != "" {
-		http.Redirect(rw, req, "/wl/"+Err_stations, http.StatusSeeOther)
-	}
+	// if Err_stations != "" {
+	// 	http.Redirect(rw, req, "/wl/"+Err_stations, http.StatusSeeOther)
+	// }
 
 	// 	t.Execute(rw, "Wrong names or unimplemented for these stations: "+Err_stations)
 	// 	return
@@ -184,7 +197,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (p *MyLog) LoadingDBForm(rw http.ResponseWriter, req *http.Request) {
-	t, err := template.ParseFiles("gateway_service/htmls/db.gtpl")
+	t, err := template.ParseFiles(dbTemplateName)
 	if err != nil {
 		http.Error(rw, "Cannot parse form", http.StatusBadRequest)
 		return
@@ -194,7 +207,9 @@ func (p *MyLog) LoadingDBForm(rw http.ResponseWriter, req *http.Request) {
 
 //unimplemented for now
 func (p *MyLog) GetFromDB(rw http.ResponseWriter, req *http.Request) {
-	t, err := template.ParseFiles("gateway_service/htmls/db.gtpl")
+	ctx, cancel := context.WithTimeout(req.Context(), 60*time.Second)
+	defer cancel()
+	t, err := template.ParseFiles(dbTemplateName)
 	if err != nil {
 		http.Error(rw, "Cannot parse html", http.StatusBadRequest)
 		return
@@ -215,7 +230,7 @@ func (p *MyLog) GetFromDB(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer conn.Close()
 	redis_client := redisProtobuff.NewRedisServiceClient(conn)
-	stream, err := redis_client.SearchWorkload(context.Background(), &redisProtobuff.Stations{StationsNames: station})
+	stream, err := redis_client.SearchWorkload(ctx, &redisProtobuff.Stations{StationsNames: station})
 	if err != nil {
 		http.Error(rw, "Bad response from some service", http.StatusInternalServerError)
 		return
