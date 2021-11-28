@@ -51,6 +51,9 @@ func (s *Server) StoreWorkload(ctx context.Context, req *protobuff.StoreWorkload
 func (s *Server) SearchWorkload(req *protobuff.Stations, srv protobuff.RedisService_SearchWorkloadServer) error {
 
 	stations_array := strings.Split(req.GetStationsNames(), ",")
+	for i := range stations_array {
+		stations_array[i] = strings.TrimSpace(stations_array[i])
+	}
 	var wg sync.WaitGroup
 	for _, v := range stations_array {
 		wg.Add(1)
