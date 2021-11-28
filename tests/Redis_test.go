@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// should be used only with no data in Redis to pass this test without accidential matches for test requests
 func TestMissingData(t *testing.T) {
 	redisworkload.NewRedis()
 	tests := []struct {
