@@ -32,6 +32,16 @@ func (m MyError) Error() string {
 
 const redisAdress = "localhost:6379"
 
+//functions to isolate internal structure of service
+func CreateStoreRequest(station, wl string) *protobuff.StoreWorkloadRequest {
+	return &protobuff.StoreWorkloadRequest{Station: station, Workload: wl}
+}
+
+func CreateSearchRequest(station string) *protobuff.Stations {
+	return &protobuff.Stations{StationsNames: station}
+
+}
+
 //Clearing Redis (only for testing purpose)
 func ClearRedis() {
 	conn, err := redis.Dial("tcp", redisAdress)

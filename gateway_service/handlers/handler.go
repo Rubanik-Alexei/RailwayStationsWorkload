@@ -128,7 +128,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer conn.Close()
 	wl_client := protobuff.NewWorkloadServiceClient(conn)
-	stream, err := wl_client.GetStationWorkload(ctx, &protobuff.GetStationWorkloadRequest{StationName: station, IsUpdateDB: dbflag})
+	stream, err := wl_client.GetStationWorkload(ctx, workloadservice.CreateWorkloadRequest(station, dbflag))
 	if err != nil {
 		http.Error(rw, "Bad response from some service", http.StatusInternalServerError)
 		return
@@ -230,7 +230,7 @@ func (p *MyLog) GetFromDB(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer conn.Close()
 	redis_client := redisProtobuff.NewRedisServiceClient(conn)
-	stream, err := redis_client.SearchWorkload(ctx, &redisProtobuff.Stations{StationsNames: station})
+	stream, err := redis_client.SearchWorkload(ctx, redisservice.CreateSearchRequest(station))
 	if err != nil {
 		http.Error(rw, "Bad response from some service", http.StatusInternalServerError)
 		return

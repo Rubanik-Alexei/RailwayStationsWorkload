@@ -39,6 +39,11 @@ func (m MyError) Error() string {
 	return m.error_msg
 }
 
+//function to isolate internal structure of service
+func CreateWorkloadRequest(station string, dbflag bool) *wlProtobuff.GetStationWorkloadRequest {
+	return &wlProtobuff.GetStationWorkloadRequest{StationName: station, IsUpdateDB: dbflag}
+}
+
 //Checking if required station name is available for scrapping workload
 func ReadCsvFile(filePath string, station string) (string, error) {
 	f, err := os.Open(filePath)
@@ -176,8 +181,8 @@ func (s *Server) GetStationWorkload(req *wlProtobuff.GetStationWorkloadRequest, 
 					break
 				}
 				defer redisConn.Close()
-				wl_client := redisProtobuff.NewRedisServiceClient(redisConn)
-				redisresp, err := wl_client.StoreWorkload(context.Background(), &redisProtobuff.StoreWorkloadRequest{Station: v, Workload: string(tmpres)})
+				redis_client := redisProtobuff.NewRedisServiceClient(redisConn)
+				redisresp, err := redis_client.StoreWorkload(context.Background(), redisworkload.CreateStoreRequest(v, string(tmpres)))
 				if err != nil {
 					resp_msg = redisresp.Error
 					break
