@@ -22,6 +22,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+var reStart, reEnd = regexp.MustCompile(`\[\[\[7`), regexp.MustCompile(`0\]\]`)
+
 type Server struct {
 	log hclog.Logger
 	wlProtobuff.UnimplementedWorkloadServiceServer
@@ -105,14 +107,18 @@ func GetMap(uurl string, wait time.Duration) (map[string]*wlProtobuff.DayWork, e
 	//fmt.Println(split_body)
 
 	//Finding the begging of workload info
-	re := regexp.MustCompile(`\[\[\[7`)
-	start_ind := FindIndex(re, 0, split_body)
+
+	//re := regexp.MustCompile(`\[\[\[7`)
+
+	start_ind := FindIndex(reStart, 0, split_body)
 	if start_ind == 0 {
 		return result, MyError{error_msg: "Cannot find workload on google map page"}
 	}
 	//Finding the ending of workload info
-	re1 := regexp.MustCompile(`0\]\]`)
-	end_ind := FindIndex(re1, start_ind, split_body)
+
+	//re1 := regexp.MustCompile(`0\]\]`)
+
+	end_ind := FindIndex(reEnd, start_ind, split_body)
 	if end_ind == 0 {
 		return result, MyError{error_msg: "Cannot find workload on google map page"}
 	}
