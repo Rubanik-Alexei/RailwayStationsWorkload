@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -102,13 +103,14 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	var station string
 	var dbflag bool
 	req.ParseForm()
-	if len(req.Form["Stations"][0]) == 0 {
+
+	if len(req.Form["Stations"][0]) == 0 && len(req.Form["AllStationsFlag"]) == 0 {
 		t.Execute(rw, "No stations was entered! ")
 		return
 	}
 	fmt.Println("Station:", req.Form["Stations"])
 	station = req.Form["Stations"][0]
-	if len(req.Form) > 1 {
+	if len(req.Form["DBFlag"]) > 0 {
 		if req.Form["DBFlag"][0] == "AddToDB" {
 			dbflag = true
 			_ = dbflag
@@ -128,10 +130,20 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer conn.Close()
 	wl_client := protobuff.NewWorkloadServiceClient(conn)
-	stream, err := wl_client.GetStationWorkload(ctx, workloadservice.CreateWorkloadRequest(station, dbflag))
-	if err != nil {
-		http.Error(rw, "Bad response from some service", http.StatusInternalServerError)
-		return
+	var stream protobuff.WorkloadService_GetStationWorkloadClient
+	if len(req.Form["AllStationsFlag"]) > 0 && req.Form["AllStationsFlag"][0] == "AllStations" {
+		allStat, err := workloadservice.ReturnAllStations(os.Getenv("STATIONSURLS"))
+		if err != nil {
+			http.Error(rw, "Couldn't get all stations", http.StatusInternalServerError)
+			return
+		}
+		stream, err = wl_client.GetStationWorkload(ctx, workloadservice.CreateWorkloadRequest(allStat, dbflag))
+	} else {
+		stream, err = wl_client.GetStationWorkload(ctx, workloadservice.CreateWorkloadRequest(station, dbflag))
+		if err != nil {
+			http.Error(rw, "Bad response from some service", http.StatusInternalServerError)
+			return
+		}
 	}
 	cnt := 2
 	xlsx := createExcelWorkloadFile()
@@ -193,7 +205,6 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	// 	t.Execute(rw, "All workloads have been successfully collected for required stations ")
 	// 	return
 	// }
-
 }
 
 func (p *MyLog) LoadingDBForm(rw http.ResponseWriter, req *http.Request) {

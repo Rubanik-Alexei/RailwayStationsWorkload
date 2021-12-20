@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var reStart, reEnd = regexp.MustCompile(`\[\[\[7`), regexp.MustCompile(`0\]\]`)
+var reStart, reEnd, reWorkload = regexp.MustCompile(`\[\[\[7`), regexp.MustCompile(`0\]\]`), regexp.MustCompile("загруженность")
 
 type Server struct {
 	log hclog.Logger
@@ -69,6 +69,27 @@ func ReadCsvFile(filePath string, station string) (string, error) {
 	return "Incorrect station name or this station is not supported for now :(", MyError{error_msg: ""}
 }
 
+func ReturnAllStations(filePath string) (string, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "Cannot Open Urls File", err
+	}
+	defer f.Close()
+
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return "Cannot parse Urls file as CSV", err
+	}
+	allStations := ""
+	for _, v := range records {
+		//fmt.Println(v)
+		//if name is found then return it's google maps url
+		allStations += v[5] + ","
+	}
+	return allStations[:len(allStations)-1], nil
+}
+
 //helper function for finding beginning/ending of workload
 func FindIndex(re *regexp.Regexp, start_ind int, split_body []string) int {
 	for i := start_ind; i < len(split_body); i++ {
@@ -100,6 +121,10 @@ func GetMap(uurl string, wait time.Duration) (map[string]*wlProtobuff.DayWork, e
 		return result, err1
 	}
 	str_body := string(body)
+	if !reWorkload.MatchString(str_body) {
+		os.WriteFile("resp", []byte(str_body), 0666)
+		return result, MyError{error_msg: "No workload at this moment"}
+	}
 	//Now we have the body of our station page and starting to retrieve data
 
 	//fmt.Println(str_body)
