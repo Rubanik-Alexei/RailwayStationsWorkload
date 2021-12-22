@@ -166,7 +166,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 			fmt.Print(err)
 		}
 		// rw.Write([]byte(tmpResp.StatName + "\n"))
-		if len(tmpResp.StatWl) == 0 {
+		if len(tmpResp.StatWl) == 0 || tmpResp.Err != "OK" {
 			Err_stations += tmpResp.StatName + ", "
 		} else {
 			for k, v := range tmpResp.StatWl {
@@ -190,6 +190,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 		t.Execute(rw, "All requested stations either have wrong names or unimplemented")
 		return
 	}
+	fmt.Println(Err_stations)
 	rw.Header().Set("Content-Disposition", "attachment; filename="+"WL"+".xlsx")
 	rw.Header().Set("Content-Type", req.Header.Get("Content-Type"))
 	rw.Header().Set("Content-Transfer-Encoding", "binary")

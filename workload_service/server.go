@@ -121,8 +121,9 @@ func GetMap(uurl string, wait time.Duration) (map[string]*wlProtobuff.DayWork, e
 		return result, err1
 	}
 	str_body := string(body)
+	//os.WriteFile("resp", []byte(str_body), 0666)
 	if !reWorkload.MatchString(str_body) {
-		os.WriteFile("resp", []byte(str_body), 0666)
+		//os.WriteFile("resp", []byte(str_body), 0666)
 		return result, MyError{error_msg: "No workload at this moment"}
 	}
 	//Now we have the body of our station page and starting to retrieve data
@@ -158,7 +159,11 @@ func GetMap(uurl string, wait time.Duration) (map[string]*wlProtobuff.DayWork, e
 			str_hour := strings.TrimLeft(split_body[i], "[")
 			hour, err := strconv.Atoi(str_hour)
 			if err != nil {
-				return result, err
+				//some day info is missed so skipping to next day
+				result[tmp] = &wlProtobuff.DayWork{DayWorkload: nil}
+				cnt++
+				i += 3
+				break
 			}
 			percentage := split_body[i+1]
 			tmp_map[int32(hour)] = percentage
