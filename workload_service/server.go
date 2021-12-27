@@ -1,6 +1,7 @@
 package workloadservice
 
 import (
+	"RailwayStationsWorkload_micro/config"
 	redisworkload "RailwayStationsWorkload_micro/redis_service"
 	redisProtobuff "RailwayStationsWorkload_micro/redis_service/protobuff"
 	wlProtobuff "RailwayStationsWorkload_micro/workload_service/protobuff"
@@ -211,7 +212,7 @@ func (s *Server) GetStationWorkload(req *wlProtobuff.GetStationWorkloadRequest, 
 					break
 				}
 				//initializing redisService Client and making request to it
-				redisConn, err := grpc.Dial(redisworkload.Redisport, grpc.WithBlock(), grpc.WithInsecure())
+				redisConn, err := grpc.Dial(config.Redisport, grpc.WithBlock(), grpc.WithInsecure())
 				if err != nil {
 					resp_msg = "Couldn't connect to service"
 					break
