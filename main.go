@@ -1,9 +1,9 @@
 package main
 
 import (
-	gatewayservice "RailwayStationsWorkload_micro/gateway_service"
-	redisservice "RailwayStationsWorkload_micro/redis_service"
-	workloadservice "RailwayStationsWorkload_micro/workload_service"
+	gatewayservice "RailwayStationsWorkload_micro/cmd/gateway"
+	redisservice "RailwayStationsWorkload_micro/cmd/redis"
+	workloadservice "RailwayStationsWorkload_micro/cmd/workload"
 )
 
 func main() {

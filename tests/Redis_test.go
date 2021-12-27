@@ -1,6 +1,8 @@
 package tests
 
 import (
+	redisMain "RailwayStationsWorkload_micro/cmd/redis"
+	"RailwayStationsWorkload_micro/config"
 	redisservice "RailwayStationsWorkload_micro/redis_service"
 	redisProtobuff "RailwayStationsWorkload_micro/redis_service/protobuff"
 	"context"
@@ -14,7 +16,7 @@ import (
 // so using ClearRedis() to achieve that
 func TestMissingData(t *testing.T) {
 	redisservice.ClearRedis()
-	redisservice.NewRedis()
+	redisMain.NewRedis()
 	tests := []struct {
 		request  redisProtobuff.Stations
 		response []redisProtobuff.SearchWorkloadResponse
@@ -38,7 +40,7 @@ func TestMissingData(t *testing.T) {
 		},
 	}
 
-	conn, err := grpc.Dial(redisservice.Redisport, grpc.WithBlock(), grpc.WithInsecure())
+	conn, err := grpc.Dial(config.Redisport, grpc.WithBlock(), grpc.WithInsecure())
 	if err != nil {
 		t.Error("Error when connecting to Redis service")
 	}
@@ -74,7 +76,7 @@ func TestMissingData(t *testing.T) {
 
 func TestRedisStoreAndSearch(t *testing.T) {
 	redisservice.ClearRedis()
-	redisservice.NewRedis()
+
 	lengthCases := 3
 	fillingCmds := []struct {
 		request      redisProtobuff.StoreWorkloadRequest
@@ -110,7 +112,7 @@ func TestRedisStoreAndSearch(t *testing.T) {
 			response: []redisProtobuff.SearchWorkloadResponse{{StationName: "Дачное_11.11.2021", Workload: "something"}, {StationName: "Дачное_15.11.2021", Workload: "Another something"}},
 		},
 	}
-	conn, err := grpc.Dial(redisservice.Redisport, grpc.WithBlock(), grpc.WithInsecure())
+	conn, err := grpc.Dial(config.Redisport, grpc.WithBlock(), grpc.WithInsecure())
 	if err != nil {
 		t.Error("Error when connecting to Redis service")
 	}

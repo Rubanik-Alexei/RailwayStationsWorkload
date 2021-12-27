@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"RailwayStationsWorkload_micro/config"
 	redisservice "RailwayStationsWorkload_micro/redis_service"
 	redisProtobuff "RailwayStationsWorkload_micro/redis_service/protobuff"
 	workloadservice "RailwayStationsWorkload_micro/workload_service"
@@ -123,7 +124,7 @@ func (p *MyLog) GetWorkload(rw http.ResponseWriter, req *http.Request) {
 	// 	http.Error(rw, "Incorrect last argument", http.StatusBadRequest)
 	// 	return
 	// }
-	conn, err := grpc.Dial(workloadservice.WLport, grpc.WithBlock(), grpc.WithInsecure())
+	conn, err := grpc.Dial(config.WLport, grpc.WithBlock(), grpc.WithInsecure())
 	if err != nil {
 		http.Error(rw, "Couldn't connect to service", http.StatusInternalServerError)
 		return
@@ -235,7 +236,7 @@ func (p *MyLog) GetFromDB(rw http.ResponseWriter, req *http.Request) {
 	// logic part of log in
 	fmt.Println("Station:", req.Form["Stations"])
 	station = req.Form["Stations"][0]
-	conn, err := grpc.Dial(redisservice.Redisport, grpc.WithBlock(), grpc.WithInsecure())
+	conn, err := grpc.Dial(config.Redisport, grpc.WithBlock(), grpc.WithInsecure())
 	if err != nil {
 		http.Error(rw, "Couldn't connect to service", http.StatusInternalServerError)
 		return
