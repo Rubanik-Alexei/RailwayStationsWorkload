@@ -2,9 +2,9 @@ package workloadservice
 
 import (
 	"RailwayStationsWorkload_micro/config"
-	redisworkload "RailwayStationsWorkload_micro/redis_service"
-	redisProtobuff "RailwayStationsWorkload_micro/redis_service/protobuff"
-	wlProtobuff "RailwayStationsWorkload_micro/workload_service/protobuff"
+	redisworkload "RailwayStationsWorkload_micro/internal/redis_service"
+	redisProtobuff "RailwayStationsWorkload_micro/internal/redis_service/protobuff"
+	wlProtobuff "RailwayStationsWorkload_micro/internal/workload_service/protobuff"
 	"context"
 	"encoding/csv"
 	"encoding/json"

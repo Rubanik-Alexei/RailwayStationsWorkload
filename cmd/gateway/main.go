@@ -1,7 +1,7 @@
 package gatewayservice
 
 import (
-	"RailwayStationsWorkload_micro/gateway_service/handlers"
+	"RailwayStationsWorkload_micro/internal/gateway_service/handlers"
 	"context"
 	"log"
 	"net/http"

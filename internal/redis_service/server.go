@@ -1,7 +1,7 @@
 package redisservice
 
 import (
-	"RailwayStationsWorkload_micro/redis_service/protobuff"
+	"RailwayStationsWorkload_micro/internal/redis_service/protobuff"
 	"context"
 	"fmt"
 	"log"

@@ -2,8 +2,8 @@ package redisservice
 
 import (
 	"RailwayStationsWorkload_micro/config"
-	redisservice "RailwayStationsWorkload_micro/redis_service"
-	"RailwayStationsWorkload_micro/redis_service/protobuff"
+	redisservice "RailwayStationsWorkload_micro/internal/redis_service"
+	"RailwayStationsWorkload_micro/internal/redis_service/protobuff"
 	"log"
 	"net"
 

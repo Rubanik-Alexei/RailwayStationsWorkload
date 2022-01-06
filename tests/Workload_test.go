@@ -1,8 +1,8 @@
 package tests
 
 import (
-	workloadservice "RailwayStationsWorkload_micro/workload_service"
-	wlProtobuff "RailwayStationsWorkload_micro/workload_service/protobuff"
+	workloadservice "RailwayStationsWorkload_micro/internal/workload_service"
+	wlProtobuff "RailwayStationsWorkload_micro/internal/workload_service/protobuff"
 	"regexp"
 	"strconv"
 	"strings"

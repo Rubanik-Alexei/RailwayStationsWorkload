@@ -5,8 +5,8 @@ import (
 	"net"
 
 	"RailwayStationsWorkload_micro/config"
-	workloadservice "RailwayStationsWorkload_micro/workload_service"
-	"RailwayStationsWorkload_micro/workload_service/protobuff"
+	workloadservice "RailwayStationsWorkload_micro/internal/workload_service"
+	"RailwayStationsWorkload_micro/internal/workload_service/protobuff"
 
 	"github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"

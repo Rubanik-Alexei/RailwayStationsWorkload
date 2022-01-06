@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"RailwayStationsWorkload_micro/config"
-	redisservice "RailwayStationsWorkload_micro/redis_service"
-	redisProtobuff "RailwayStationsWorkload_micro/redis_service/protobuff"
-	workloadservice "RailwayStationsWorkload_micro/workload_service"
-	"RailwayStationsWorkload_micro/workload_service/protobuff"
+	redisservice "RailwayStationsWorkload_micro/internal/redis_service"
+	redisProtobuff "RailwayStationsWorkload_micro/internal/redis_service/protobuff"
+	workloadservice "RailwayStationsWorkload_micro/internal/workload_service"
+	"RailwayStationsWorkload_micro/internal/workload_service/protobuff"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -24,8 +24,8 @@ import (
 )
 
 //Paths to hmtls
-const wlTemplateName = "gateway_service/htmls/wl.html"
-const dbTemplateName = "gateway_service/htmls/db.html"
+const wlTemplateName = "internal/gateway_service/htmls/wl.html"
+const dbTemplateName = "internal/gateway_service/htmls/db.html"
 
 type MyLog struct {
 	l *log.Logger

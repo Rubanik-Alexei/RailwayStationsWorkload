@@ -3,8 +3,8 @@ package tests
 import (
 	redisMain "RailwayStationsWorkload_micro/cmd/redis"
 	"RailwayStationsWorkload_micro/config"
-	redisservice "RailwayStationsWorkload_micro/redis_service"
-	redisProtobuff "RailwayStationsWorkload_micro/redis_service/protobuff"
+	redisservice "RailwayStationsWorkload_micro/internal/redis_service"
+	redisProtobuff "RailwayStationsWorkload_micro/internal/redis_service/protobuff"
 	"context"
 	"io"
 	"testing"
