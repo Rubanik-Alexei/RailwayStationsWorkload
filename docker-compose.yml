@@ -1,0 +1,28 @@
+version: "2"
+services:
+  workload:
+    build: .
+    ports:
+      - "9090:9090"
+    container_name: "wl"
+    environment:
+      - STATIONSURLS=stations.csv
+  # workload:
+  #   build: internal/workload_service/
+  #   ports:
+  #     - "9092:9092"
+  #   container_name: "workload"
+  # gateway:
+  #   build: internal/gateway_service/
+  #   ports:
+  #     - "9090:9090"
+  #   container_name: "gateway"
+  # wl_redis:
+  #   build: internal/redis_service/
+  #   ports:
+  #     - "9091:9091"
+  #   container_name: wl_redis
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
