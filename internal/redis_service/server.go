@@ -30,7 +30,10 @@ func (m MyError) Error() string {
 	return m.error_msg
 }
 
-const redisAdress = "localhost:6379"
+//const redisAdress = "localhost:6379"
+
+//below adress for dockerizing
+const redisAdress = "redis:6379"
 
 //functions to isolate internal structure of service
 func CreateStoreRequest(station, wl string) *protobuff.StoreWorkloadRequest {
@@ -68,6 +71,7 @@ func (s *Server) StoreWorkload(ctx context.Context, req *protobuff.StoreWorkload
 	conn, err := redis.Dial("tcp", redisAdress)
 	errMsg := "OK"
 	if err != nil {
+		s.log.Error(err.Error())
 		errMsg = "Cannot connect to Redis"
 		return &protobuff.ErrorMsg{Error: errMsg}, err
 	}
