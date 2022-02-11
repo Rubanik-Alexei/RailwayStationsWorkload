@@ -1,8 +1,7 @@
-FROM golang:1.17.3
+FROM golang:1.17.3-alpine
 
 WORKDIR /gateway_service
 COPY . .
-ADD /stations.csv .
 RUN go mod download
 
 RUN go build -v -o gtw
