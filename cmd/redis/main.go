@@ -15,11 +15,7 @@ import (
 func NewRedis() {
 	logg := hclog.Default()
 	//lis, err := net.Listen("tcp", config.Redisport)
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "9091"
-	}
-	lis, err := net.Listen("tcp", ":"+port)
+	lis, err := net.Listen("tcp", os.Getenv("RedisPort"))
 	if err != nil {
 		log.Fatalln("Failed to listen:", err)
 	}
