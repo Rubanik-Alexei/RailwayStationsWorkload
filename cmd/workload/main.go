@@ -16,7 +16,11 @@ import (
 func NewWorkload() {
 	logg := hclog.Default()
 	//lis, err := net.Listen("tcp", config.WLport)
-	lis, err := net.Listen("tcp", os.Getenv("WLPort"))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "9092"
+	}
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalln("Failed to listen:", err)
 	}
