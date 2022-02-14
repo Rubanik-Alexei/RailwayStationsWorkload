@@ -3,9 +3,8 @@ package gateway
 import (
 	"log"
 	"net"
-	"os"
 
-	_ "RailwayStationsWorkload_micro/config"
+	"RailwayStationsWorkload_micro/config"
 	workloadservice "RailwayStationsWorkload_micro/internal/workload_service"
 	"RailwayStationsWorkload_micro/internal/workload_service/protobuff"
 
@@ -15,8 +14,7 @@ import (
 
 func NewWorkload() {
 	logg := hclog.Default()
-	//lis, err := net.Listen("tcp", config.WLport)
-	lis, err := net.Listen("tcp", os.Getenv("WLPort"))
+	lis, err := net.Listen("tcp", config.WLport)
 	if err != nil {
 		log.Fatalln("Failed to listen:", err)
 	}

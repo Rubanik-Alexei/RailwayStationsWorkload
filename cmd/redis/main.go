@@ -1,12 +1,11 @@
 package redisservice
 
 import (
-	_ "RailwayStationsWorkload_micro/config"
+	"RailwayStationsWorkload_micro/config"
 	redisservice "RailwayStationsWorkload_micro/internal/redis_service"
 	"RailwayStationsWorkload_micro/internal/redis_service/protobuff"
 	"log"
 	"net"
-	"os"
 
 	"github.com/hashicorp/go-hclog"
 	"google.golang.org/grpc"
@@ -14,8 +13,7 @@ import (
 
 func NewRedis() {
 	logg := hclog.Default()
-	//lis, err := net.Listen("tcp", config.Redisport)
-	lis, err := net.Listen("tcp", os.Getenv("RedisPort"))
+	lis, err := net.Listen("tcp", config.Redisport)
 	if err != nil {
 		log.Fatalln("Failed to listen:", err)
 	}
