@@ -1,1 +1,1 @@
-web: bin/RailwayStationsWorkload
+web: bin/RailwayStationsWorkload_micro
