@@ -96,7 +96,8 @@ func NewGateway() {
 
 	// create a new server
 	s := http.Server{
-		Addr:         ":9090",           // configure the bind address
+		//Addr:         ":9090",           // configure the bind address
+		Addr:         os.Getenv("GtwPort"),
 		Handler:      sm,                // set the default handler
 		ErrorLog:     l,                 // set the logger for the server
 		ReadTimeout:  10 * time.Second,  // max time to read request from the client
