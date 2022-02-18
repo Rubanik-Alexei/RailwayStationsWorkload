@@ -93,11 +93,9 @@ func NewGateway() {
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/db", ph.GetFromDB)
 	postRouter.HandleFunc("/wl", ph.GetWorkload)
-
 	// create a new server
 	s := http.Server{
-		//Addr:         ":9090",           // configure the bind address
-		Addr:         os.Getenv("GtwPort"),
+		Addr:         ":9090",           // configure the bind address
 		Handler:      sm,                // set the default handler
 		ErrorLog:     l,                 // set the logger for the server
 		ReadTimeout:  10 * time.Second,  // max time to read request from the client

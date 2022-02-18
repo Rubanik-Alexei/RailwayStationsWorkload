@@ -1,27 +1,35 @@
 version: "2"
 services:
-  workload:
-    build: .
-    ports:
-      - "9090:9090"
-    container_name: "wl"
-    environment:
-      - STATIONSURLS=stations.csv
   # workload:
-  #   build: internal/workload_service/
-  #   ports:
-  #     - "9092:9092"
-  #   container_name: "workload"
-  # gateway:
-  #   build: internal/gateway_service/
+  #   build: .
   #   ports:
   #     - "9090:9090"
-  #   container_name: "gateway"
-  # wl_redis:
-  #   build: internal/redis_service/
-  #   ports:
-  #     - "9091:9091"
-  #   container_name: wl_redis
+  #   container_name: "wl"
+  #   environment:
+  #     - STATIONSURLS=stations.csv
+  workload:
+    build: 
+      dockerfile:  ./internal/workload_service/Dockerfile
+      context: .
+    ports:
+      - "9092:9092"
+    container_name: "workload"
+    environment:
+      - STATIONSURLS=stations.csv
+  gateway:
+    build: 
+      dockerfile:  ./internal/gateway_service/Dockerfile
+      context: .
+    ports:
+      - "9090:9090"
+    container_name: "gateway"
+  wl_redis:
+    build: 
+      dockerfile:  ./internal/redis_service/Dockerfile
+      context: .
+    ports:
+      - "9091:9091"
+    container_name: wl_redis
   redis:
     image: redis
     ports:
